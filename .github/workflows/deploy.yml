@@ -55,11 +55,20 @@ jobs:
           echo "config.js content (first line only):"
           head -n 1 publish/config.js || true
 
+      - name: Debug git status in workspace
+        run: |
+          echo "Workspace git branches (remote):"
+          git fetch --all --prune
+          git branch -a || true
+          echo "Last commit in workspace (for debug):"
+          git --no-pager log -1 --pretty=oneline || true
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./publish
+          publish_branch: gh-pages
           # Optionally set user/email for the commit:
           # commit_user_name: github-actions[bot]
           # commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
