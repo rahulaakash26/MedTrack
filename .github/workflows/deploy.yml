@@ -35,12 +35,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo \"window.MEDTRACK_CONFIG = {\" > config.js
-          echo \"  SUPABASE_URL: '\$SUPABASE_URL',\" >> config.js
-          echo \"  SUPABASE_ANON_KEY: '\$SUPABASE_ANON_KEY'\" >> config.js
-          echo \"};\" >> config.js
+          cat > config.js <<EOF
+          window.MEDTRACK_CONFIG = {
+            SUPABASE_URL: '$SUPABASE_URL',
+            SUPABASE_ANON_KEY: '$SUPABASE_ANON_KEY'
+          };
+          EOF
           # Print a short confirmation without exposing secrets
-          echo \"Wrote config.js (length: $(wc -c < config.js) bytes)\"
+          echo "Wrote config.js (length: $(wc -c < config.js) bytes)"
 
 
       - name: Deploy to GitHub Pages
