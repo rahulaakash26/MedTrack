@@ -40,6 +40,9 @@ jobs:
           mkdir publish
           rsync -a --delete --exclude='.github' --exclude='.git' --exclude='node_modules' --exclude='publish' ./ publish/
 
+          # Remove any copied .gitignore so config.js won't be ignored by git
+          rm -f publish/.gitignore || true
+
           # Write config.js into publish dir
           cat > publish/config.js <<EOF
           window.MEDTRACK_CONFIG = {
