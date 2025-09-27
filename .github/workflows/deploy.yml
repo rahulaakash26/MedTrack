@@ -38,7 +38,7 @@ jobs:
           # Create a clean publish directory and copy site files
           rm -rf publish || true
           mkdir publish
-          rsync -a --exclude='.github' --exclude='.git' --exclude='node_modules' ./ publish/
+          rsync -a --delete --exclude='.github' --exclude='.git' --exclude='node_modules' --exclude='publish' ./ publish/
 
           # Write config.js into publish dir
           cat > publish/config.js <<EOF
@@ -72,3 +72,12 @@ jobs:
           # Optionally set user/email for the commit:
           # commit_user_name: github-actions[bot]
           # commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Verify gh-pages branch via GitHub API
+        env:
+          REPO: ${{ github.repository }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Listing root files in gh-pages via GitHub API"
+          API_URL="https://api.github.com/repos/$REPO/git/trees/gh-pages?recursive=0"
+          curl -s -H "Authorization: token $TOKEN" "$API_URL" | jq -r '.tree[]?.path' || echo "Failed to list tree"
