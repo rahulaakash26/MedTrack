@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages (with config.js)
+
+on:
+  push:
+    branches:
+      - main
+  # optional manual trigger:
+  # workflow_dispatch:
+
+permissions:
+  contents: write  # required by actions that publish to gh-pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Optional: install/build if your site needs a build step
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '18'
+      # - name: Install dependencies
+      #   run: npm ci
+      # - name: Build site
+      #   run: npm run build
+      # If you build into a directory (e.g., 'dist'), set `publish_dir` below to './dist'
+
+      - name: Write config.js with Supabase secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo \"window.MEDTRACK_CONFIG = {\" > config.js
+          echo \"  SUPABASE_URL: '\$SUPABASE_URL',\" >> config.js
+          echo \"  SUPABASE_ANON_KEY: '\$SUPABASE_ANON_KEY'\" >> config.js
+          echo \"};\" >> config.js
+          # Print a short confirmation without exposing secrets
+          echo \"Wrote config.js (length: $(wc -c < config.js) bytes)\"
+
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./   # change to ./dist if you build into dist
+          # Optionally set user/email for the commit:
+          # commit_user_name: github-actions[bot]
+          # commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
