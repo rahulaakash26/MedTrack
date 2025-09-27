@@ -30,26 +30,36 @@ jobs:
       #   run: npm run build
       # If you build into a directory (e.g., 'dist'), set `publish_dir` below to './dist'
 
-      - name: Write config.js with Supabase secrets
+      - name: Prepare publish directory
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          cat > config.js <<EOF
+          # Create a clean publish directory and copy site files
+          rm -rf publish || true
+          mkdir publish
+          rsync -a --exclude='.github' --exclude='.git' --exclude='node_modules' ./ publish/
+
+          # Write config.js into publish dir
+          cat > publish/config.js <<EOF
           window.MEDTRACK_CONFIG = {
             SUPABASE_URL: '$SUPABASE_URL',
             SUPABASE_ANON_KEY: '$SUPABASE_ANON_KEY'
           };
           EOF
-          # Print a short confirmation without exposing secrets
-          echo "Wrote config.js (length: $(wc -c < config.js) bytes)"
 
+      - name: Show publish directory contents for debugging
+        run: |
+          echo "Publish directory listing:"
+          ls -la publish
+          echo "config.js content (first line only):"
+          head -n 1 publish/config.js || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./   # change to ./dist if you build into dist
+          publish_dir: ./publish
           # Optionally set user/email for the commit:
           # commit_user_name: github-actions[bot]
           # commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
