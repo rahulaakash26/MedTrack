@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>💊 My Medicine Cabinet</h1>
+            <button id="add-medicine-btn" class="btn-primary">+ Add Medicine</button>
+        </header>
+
+        <main>
+            <section id="medicine-list">
+                <div class="filter-tabs">
+                    <button class="tab active" data-filter="all">All</button>
+                    <button class="tab" data-filter="active">Active</button>
+                    <button class="tab" data-filter="expiring">Expiring Soon</button>
+                    <button class="tab" data-filter="expired">Expired</button>
+                </div>
+                
+                <div id="medicines-container" class="medicines-grid">
+                    <!-- Medicine cards will be dynamically inserted here -->
+                </div>
+                
+                <div id="empty-state" class="empty-state">
+                    <img src="pill-icon.svg" alt="Pill icon">
+                    <p>No medicines tracked yet</p>
+                    <button id="add-first-medicine" class="btn-primary">Add Your First Medicine</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add/Edit Medicine Modal -->
+    <div id="medicine-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Add New Medicine</h2>
+            <form id="medicine-form">
+                <input type="hidden" id="medicine-id">
+                
+                <div class="form-group">
+                    <label for="medicine-name">Medicine Name *</label>
+                    <input type="text" id="medicine-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="medicine-quantity">Quantity</label>
+                    <input type="number" id="medicine-quantity" min="1" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="expiry-date">Expiry Date *</label>
+                    <input type="date" id="expiry-date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="medicine-notes">Notes</label>
+                    <textarea id="medicine-notes" rows="3" placeholder="Dosage, storage instructions, etc."></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Medicine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Optional local config: copy config.example.js -> config.js and fill values. This file is ignored by git. -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
