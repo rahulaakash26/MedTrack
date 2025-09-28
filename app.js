@@ -214,6 +214,23 @@ class MedicineTracker {
                 this.setFilter(e.target.dataset.filter);
             });
         });
+
+        const searchInput = document.getElementById('medicine-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.performSearch(e.target.value);
+            });
+        }
+        
+        const clearSearchBtn = document.getElementById('clear-search');
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                    this.performSearch('');
+                }
+            });
+        }
     }
 
     openAddMedicineModal() {
@@ -326,6 +343,15 @@ class MedicineTracker {
 
     getFilteredMedicines() {
         let filtered = [...this.medicines];
+
+        if (this.searchQuery && this.searchQuery.length > 0) {
+            filtered = filtered.filter(med => {
+                return (
+                    med.name.toLowerCase().includes(this.searchQuery) ||
+                    (med.notes && med.notes.toLowerCase().includes(this.searchQuery))
+                );
+            });
+        }
         
         if (this.currentFilter === 'active') {
             filtered = filtered.filter(med => !this.isExpired(med.expiryDate));
@@ -364,10 +390,21 @@ class MedicineTracker {
         const container = document.getElementById('medicines-container');
         const emptyState = document.getElementById('empty-state');
         const filteredMedicines = this.getFilteredMedicines();
-        
+
+         // Show different empty state messages based on whether we're searching
+        const isEmptyDueToSearch = this.searchQuery && this.searchQuery.length > 0 && filteredMedicines.length === 0;
+
         if (filteredMedicines.length === 0) {
             container.style.display = 'none';
             emptyState.style.display = 'block';
+            
+            // Update empty state message based on search
+            const emptyStateP = emptyState.querySelector('p');
+            if (isEmptyDueToSearch) {
+                emptyStateP.textContent = `No medicines found matching "${this.searchQuery}"`;
+            } else {
+                emptyStateP.textContent = 'No medicines tracked yet';
+            }
         } else {
             container.style.display = 'flex';
             emptyState.style.display = 'none';
@@ -561,6 +598,20 @@ class MedicineTracker {
         
         // Set timeout for first daily check
         setTimeout(checkDaily, timeToMidnight);
+    }
+
+    performSearch(query) {
+        // Update clear button visibility
+        const clearBtn = document.getElementById('clear-search');
+        if (clearBtn) {
+            clearBtn.style.display = query ? 'block' : 'none';
+        }
+        
+        // Store the current search query
+        this.searchQuery = query.toLowerCase().trim();
+        
+        // Re-render medicines with search filter applied
+        this.renderMedicines();
     }
 }
 
