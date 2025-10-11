@@ -77,6 +77,39 @@ class AuthHandler {
         }
     }
 
+    async signInWithGoogle() {
+        if (!this.supabase) {
+            return { success: false, error: 'Authentication service not available' };
+        }
+
+        try {
+            // Get the redirect URL for after OAuth completes
+            const redirectUrl = this.getRedirectUrl('/index.html');
+            
+            const { data, error } = await this.supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    }
+                }
+            });
+
+            if (error) throw error;
+
+            // Note: The function will redirect before returning
+            return { success: true, data };
+        } catch (error) {
+            console.error('Google sign-in error:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Failed to sign in with Google. Please try again.' 
+            };
+        }
+    }
+
     async logout() {
         if (!this.supabase) {
             return { success: false, error: 'Authentication service not available' };
