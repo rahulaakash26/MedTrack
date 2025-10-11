@@ -29,16 +29,26 @@ class MedicineTracker {
         this.medicines = [];
         this.currentFilter = 'all';
         this.userId = null;
+        this.currentUser = null;
+        this.authHandler = new AuthHandler();
         
         this.init();
     }
 
-    init() {
-        // Get or create user ID
-        this.getUserId();
+    async init() {
+        // Check authentication first
+        const isAuthenticated = await this.checkAuthentication();
+        
+        if (!isAuthenticated) {
+            window.location.href = 'auth/login.html';
+            return;
+        }
+        
+        // Setup user menu
+        this.setupUserMenu();
         
         // Load medicines from Supabase
-        this.loadMedicinesFromSupabase();
+        await this.loadMedicinesFromSupabase();
         
         // Set up event listeners
         this.setupEventListeners();
@@ -50,39 +60,77 @@ class MedicineTracker {
         this.setupDailyCheck();
     }
 
-    // Update your getUserId method in app.js
-    async getUserId() {
-        // First, try to get user email from localStorage
-        let userEmail = localStorage.getItem('medicineTrackerUserEmail');
-        
-        if (!userEmail) {
-            // If no email, prompt user to enter one
-            userEmail = prompt('Please enter your email address to access your medicine data:');
+    async checkAuthentication() {
+        if (!this.supabase) {
+            console.error('Supabase not initialized');
+            return false;
+        }
+
+        try {
+            const { data: { user } } = await this.supabase.auth.getUser();
             
-            if (!userEmail || !userEmail.includes('@')) {
-                alert('Valid email required to save your medicine data. Please refresh and try again.');
-                return null;
+            if (!user) {
+                return false;
             }
             
-            // Save to localStorage
-            localStorage.setItem('medicineTrackerUserEmail', userEmail);
+            this.currentUser = user;
+            this.userId = user.id;
+            
+            return true;
+        } catch (error) {
+            console.error('Authentication check failed:', error);
+            return false;
         }
-        
-        // Generate a consistent userId from the email (hash it)
-        this.userId = this.generateUserIdFromEmail(userEmail);
-        return this.userId;
     }
 
-    // Add this helper method
-    generateUserIdFromEmail(email) {
-        // Simple hash function to generate consistent ID from email
-        let hash = 0;
-        for (let i = 0; i < email.length; i++) {
-            const char = email.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
+    setupUserMenu() {
+        if (!this.currentUser) return;
+
+        // Display user email in header
+        const userEmailEl = document.getElementById('user-email');
+        const userDropdownEmailEl = document.getElementById('user-dropdown-email');
+        
+        if (userEmailEl && this.currentUser.email) {
+            userEmailEl.textContent = this.currentUser.email;
         }
-        return 'user_' + Math.abs(hash).toString(36);
+        
+        if (userDropdownEmailEl && this.currentUser.email) {
+            userDropdownEmailEl.textContent = this.currentUser.email;
+        }
+
+        // Setup dropdown toggle
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        if (userMenuBtn && userDropdown) {
+            userMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userDropdown.contains(e.target) && !userMenuBtn.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Setup logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                // Clear local cache before logout
+                this.clearLocalStorage();
+                
+                const result = await this.authHandler.logout();
+                if (result.success) {
+                    window.location.href = 'auth/login.html';
+                } else {
+                    alert('Failed to logout. Please try again.');
+                }
+            });
+        }
     }
 
     async loadMedicinesFromSupabase() {
@@ -174,17 +222,35 @@ class MedicineTracker {
         }
     }
 
-    // Keep your existing localStorage methods as fallback/offline support
+    // LocalStorage methods for offline support and caching (per user)
     saveToLocalStorage() {
-        localStorage.setItem('medicines', JSON.stringify(this.medicines));
+        if (!this.userId) return; // Don't save if no authenticated user
+        
+        const storageKey = `medicines_${this.userId}`;
+        localStorage.setItem(storageKey, JSON.stringify(this.medicines));
     }
 
     loadFromLocalStorage() {
-        const savedMedicines = localStorage.getItem('medicines');
+        if (!this.userId) {
+            this.renderMedicines();
+            return;
+        }
+        
+        const storageKey = `medicines_${this.userId}`;
+        const savedMedicines = localStorage.getItem(storageKey);
         if (savedMedicines) {
             this.medicines = JSON.parse(savedMedicines);
         }
         this.renderMedicines();
+    }
+    
+    clearLocalStorage() {
+        // Clear all medicine caches (useful for logout)
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('medicines_')) {
+                localStorage.removeItem(key);
+            }
+        });
     }
 
     setupEventListeners() {
@@ -529,7 +595,7 @@ class MedicineTracker {
     createBrowserNotification(message) {
         const notification = new Notification('Medicine Tracker', {
             body: message,
-            icon: 'pill-icon.svg'
+            icon: 'assets/images/pill-icon.svg'
         });
         
         notification.onclick = function() {

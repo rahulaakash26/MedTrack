@@ -38,25 +38,55 @@ jobs:
           # Create a clean publish directory and copy site files
           rm -rf publish || true
           mkdir publish
-          rsync -a --delete --exclude='.github' --exclude='.git' --exclude='node_modules' --exclude='publish' ./ publish/
+          rsync -a --delete \
+            --exclude='.github' \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='publish' \
+            --exclude='config/config.js' \
+            --exclude='REORGANIZATION_COMPLETE.md' \
+            ./ publish/
 
-          # Remove any copied .gitignore so config.js won't be ignored by git
-          rm -f publish/.gitignore || true
+          # Ensure config directory exists
+          mkdir -p publish/config
 
-          # Write config.js into publish dir
-          cat > publish/config.js <<EOF
+          # Write config.js into publish/config/ directory
+          cat > publish/config/config.js << 'CONFIGEOF'
           window.MEDTRACK_CONFIG = {
-            SUPABASE_URL: '$SUPABASE_URL',
-            SUPABASE_ANON_KEY: '$SUPABASE_ANON_KEY'
+            SUPABASE_URL: 'REPLACE_SUPABASE_URL',
+            SUPABASE_ANON_KEY: 'REPLACE_SUPABASE_ANON_KEY'
           };
-          EOF
+          CONFIGEOF
+          
+          # Replace placeholder variables with actual values
+          sed -i "s|REPLACE_SUPABASE_URL|$SUPABASE_URL|g" publish/config/config.js
+          sed -i "s|REPLACE_SUPABASE_ANON_KEY|$SUPABASE_ANON_KEY|g" publish/config/config.js
 
       - name: Show publish directory contents for debugging
         run: |
-          echo "Publish directory listing:"
-          ls -la publish
-          echo "config.js content (first line only):"
-          head -n 1 publish/config.js || true
+          echo "=== Publish directory structure ==="
+          ls -la publish/
+          echo ""
+          echo "=== Config directory ==="
+          ls -la publish/config/ || echo "Config directory not found!"
+          echo ""
+          echo "=== Assets directory ==="
+          ls -la publish/assets/ || echo "Assets directory not found!"
+          echo ""
+          echo "=== Auth directory ==="
+          ls -la publish/auth/ || echo "Auth directory not found!"
+          echo ""
+          echo "=== Config file content (first 3 lines) ==="
+          head -n 3 publish/config/config.js || echo "Config file not found!"
+          echo ""
+          echo "=== Verifying SUPABASE_URL is set ==="
+          if grep -q "SUPABASE_URL: 'https://" publish/config/config.js; then
+            echo "✓ SUPABASE_URL properly replaced with actual URL"
+          elif grep -q "REPLACE_SUPABASE_URL" publish/config/config.js; then
+            echo "✗ ERROR: SUPABASE_URL not replaced (still has placeholder)"
+          else
+            echo "⚠ WARNING: Could not verify SUPABASE_URL"
+          fi
 
       - name: Debug git status in workspace
         run: |
@@ -76,11 +106,17 @@ jobs:
           # commit_user_name: github-actions[bot]
           # commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
-      - name: Verify gh-pages branch via GitHub API
+      - name: Verify deployment structure
         env:
           REPO: ${{ github.repository }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Listing root files in gh-pages via GitHub API"
-          API_URL="https://api.github.com/repos/$REPO/git/trees/gh-pages?recursive=0"
-          curl -s -H "Authorization: token $TOKEN" "$API_URL" | jq -r '.tree[]?.path' || echo "Failed to list tree"
+          echo "=== Verifying gh-pages branch structure ==="
+          API_URL="https://api.github.com/repos/$REPO/git/trees/gh-pages?recursive=1"
+          
+          echo "Root files and directories:"
+          curl -s -H "Authorization: token $TOKEN" "$API_URL" | jq -r '.tree[]?.path' | head -20 || echo "Failed to list tree"
+          
+          echo ""
+          echo "✓ Checking for required directories:"
+          curl -s -H "Authorization: token $TOKEN" "$API_URL" | jq -r '.tree[]?.path' | grep -E '^(config|assets|auth|docs)/' | head -10 || echo "Some directories might be missing"
