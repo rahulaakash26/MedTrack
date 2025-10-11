@@ -36,20 +36,7 @@ header h1 {
     font-weight: 600;
 }
 
-.btn-primary {
-    background-color: #ff6b6b;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.btn-primary:hover {
-    background-color: #ff5252;
-}
+/* Header actions removed - using FAB now */
 
 /* Main Content */
 main {
@@ -369,6 +356,12 @@ main {
     }
 }
 
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.25rem;
+    }
+}
+
 /* Animation for adding new items */
 @keyframes fadeInUp {
     from {
@@ -447,4 +440,64 @@ main {
 /* Make sure the medicine list has enough spacing */
 #medicine-list {
     margin-top: 1rem;
+}
+
+/* Floating Action Button */
+button.fab,
+#add-medicine-btn.fab {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    background-color: #ff6b6b !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4) !important;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0 !important;
+    font-size: 28px;
+    font-weight: 300;
+}
+
+button.fab:hover,
+#add-medicine-btn.fab:hover {
+    background-color: #ff5252 !important;
+    box-shadow: 0 6px 16px rgba(255, 107, 107, 0.5) !important;
+    transform: scale(1.1);
+}
+
+button.fab:active,
+#add-medicine-btn.fab:active {
+    transform: scale(0.95);
+}
+
+.fab-icon {
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+/* Responsive FAB positioning */
+@media (max-width: 600px) {
+    button.fab,
+    #add-medicine-btn.fab {
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 52px !important;
+        height: 52px !important;
+        min-width: 52px !important;
+        font-size: 24px;
+    }
+    
+    .fab-icon {
+        font-size: 24px;
+    }
 }

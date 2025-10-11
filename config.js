@@ -1,4 +1,0 @@
-window.MEDTRACK_CONFIG = {
-  SUPABASE_URL: 'https://swqpgsiskbwwehnyiarg.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3cXBnc2lza2J3d2VobnlpYXJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NTYxMjksImV4cCI6MjA3NDUzMjEyOX0.4ABMADQIuCvV4QRJCghcRKMNTNGhX4-xn-bBsq-cVT4'
-};
