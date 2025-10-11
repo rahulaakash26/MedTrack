@@ -41,6 +41,7 @@ jobs:
           rsync -a --delete \
             --exclude='.github' \
             --exclude='.git' \
+            --exclude='.gitignore' \
             --exclude='node_modules' \
             --exclude='publish' \
             --exclude='config/config.js' \
@@ -120,3 +121,11 @@ jobs:
           echo ""
           echo "✓ Checking for required directories:"
           curl -s -H "Authorization: token $TOKEN" "$API_URL" | jq -r '.tree[]?.path' | grep -E '^(config|assets|auth|docs)/' | head -10 || echo "Some directories might be missing"
+          
+          echo ""
+          echo "✓ Verifying config.js deployment:"
+          if curl -s -H "Authorization: token $TOKEN" "$API_URL" | jq -r '.tree[]?.path' | grep -q '^config/config.js$'; then
+            echo "✅ config/config.js is present in gh-pages"
+          else
+            echo "❌ ERROR: config/config.js is MISSING from gh-pages!"
+          fi
