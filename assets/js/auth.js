@@ -110,6 +110,71 @@ class AuthHandler {
         }
     }
 
+    async signInWithPhone(phoneNumber) {
+        if (!this.supabase) {
+            return { success: false, error: 'Authentication service not available' };
+        }
+
+        try {
+            // Validate phone number format
+            if (!phoneNumber || phoneNumber.trim() === '') {
+                throw new Error('Please enter a valid phone number');
+            }
+
+            // Format phone number (remove spaces, dashes, etc.)
+            const formattedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+            
+            // Ensure phone number starts with +
+            const finalPhone = formattedPhone.startsWith('+') ? formattedPhone : '+' + formattedPhone;
+
+            const { data, error } = await this.supabase.auth.signInWithOtp({
+                phone: finalPhone
+            });
+
+            if (error) throw error;
+
+            return { success: true, data, phone: finalPhone };
+        } catch (error) {
+            console.error('Phone sign-in error:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Failed to send OTP. Please check your phone number and try again.' 
+            };
+        }
+    }
+
+    async verifyPhoneOtp(phoneNumber, token) {
+        if (!this.supabase) {
+            return { success: false, error: 'Authentication service not available' };
+        }
+
+        try {
+            // Validate inputs
+            if (!phoneNumber || phoneNumber.trim() === '') {
+                throw new Error('Phone number is required');
+            }
+            if (!token || token.trim() === '') {
+                throw new Error('Please enter the OTP code');
+            }
+
+            const { data, error } = await this.supabase.auth.verifyOtp({
+                phone: phoneNumber,
+                token: token.trim(),
+                type: 'sms'
+            });
+
+            if (error) throw error;
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('OTP verification error:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Invalid OTP code. Please try again.' 
+            };
+        }
+    }
+
     async logout() {
         if (!this.supabase) {
             return { success: false, error: 'Authentication service not available' };

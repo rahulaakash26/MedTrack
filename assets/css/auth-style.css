@@ -196,6 +196,107 @@
     flex-shrink: 0;
 }
 
+.btn-phone {
+    background-color: white;
+    color: #444;
+    border: 1px solid #dadce0;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.btn-phone:hover:not(:disabled) {
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.btn-phone:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.phone-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.phone-auth-section {
+    margin-top: 1rem;
+    padding: 1.5rem;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    animation: slideUp 0.3s ease-out;
+}
+
+.phone-auth-section h2 {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    color: #4a6fa5;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+    transition: color 0.3s;
+}
+
+.btn-back:hover {
+    color: #3d5a8a;
+    text-decoration: underline;
+}
+
+.otp-sent-message {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: #e7f3ff;
+    border-radius: 8px;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.otp-sent-message strong {
+    color: #4a6fa5;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #4a6fa5;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.75rem;
+    width: 100%;
+    text-align: center;
+    transition: color 0.3s;
+}
+
+.btn-link:hover:not(:disabled) {
+    color: #3d5a8a;
+    text-decoration: underline;
+}
+
+.btn-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .btn-loader {
     display: none;
 }

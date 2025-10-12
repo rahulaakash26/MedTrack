@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Medicine Tracker</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/auth-style.css?v=2">
+    <link rel="stylesheet" href="../assets/css/auth-style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -55,12 +55,50 @@
                     <span class="btn-loader" style="display: none;">Connecting...</span>
                 </button>
                 
+                <button type="button" class="btn-phone btn-full" id="phone-signin-btn">
+                    <span class="phone-icon">📱</span>
+                    <span class="btn-text">Continue with Phone</span>
+                </button>
+                
                 <div class="auth-divider">
                     <span>Already have an account?</span>
                 </div>
                 
                 <a href="login.html" class="btn-secondary btn-full">Sign In</a>
             </form>
+            
+            <!-- Phone Authentication Section (Hidden by default, outside form) -->
+            <div id="phone-auth-section" class="phone-auth-section" style="display: none;">
+                <h2>Phone Sign Up</h2>
+                <button type="button" class="btn-back" id="back-to-email-btn">
+                    ← Back to email signup
+                </button>
+                
+                <div id="phone-input-section">
+                    <div class="form-group">
+                        <label for="phone-number">Phone Number</label>
+                        <input type="tel" id="phone-number" placeholder="+1234567890" required>
+                        <small class="form-hint">Enter with country code (e.g., +1 for US)</small>
+                    </div>
+                    <button type="button" class="btn-primary btn-full" id="send-otp-btn">
+                        <span class="btn-text">Send OTP</span>
+                        <span class="btn-loader" style="display: none;">Sending...</span>
+                    </button>
+                </div>
+                
+                <div id="otp-verify-section" style="display: none;">
+                    <p class="otp-sent-message">OTP sent to <strong id="phone-display"></strong></p>
+                    <div class="form-group">
+                        <label for="otp-code">Enter OTP</label>
+                        <input type="text" id="otp-code" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+                    <button type="button" class="btn-primary btn-full" id="verify-otp-btn">
+                        <span class="btn-text">Verify OTP</span>
+                        <span class="btn-loader" style="display: none;">Verifying...</span>
+                    </button>
+                    <button type="button" class="btn-link" id="resend-otp-btn">Resend OTP</button>
+                </div>
+            </div>
             
             <div id="auth-message" class="auth-message"></div>
         </div>
@@ -138,6 +176,116 @@
                 btnText.style.display = 'inline';
                 btnLoader.style.display = 'none';
             }
+        });
+        
+        // Phone authentication handlers
+        let currentPhoneNumber = '';
+        
+        // Show phone auth section
+        document.getElementById('phone-signin-btn').addEventListener('click', () => {
+            document.getElementById('signup-form').style.display = 'none';
+            document.getElementById('phone-auth-section').style.display = 'block';
+            document.getElementById('phone-number').focus();
+        });
+        
+        // Back to email signup
+        document.getElementById('back-to-email-btn').addEventListener('click', () => {
+            document.getElementById('phone-auth-section').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'block';
+            // Reset phone auth section
+            document.getElementById('phone-input-section').style.display = 'block';
+            document.getElementById('otp-verify-section').style.display = 'none';
+            document.getElementById('phone-number').value = '';
+            document.getElementById('otp-code').value = '';
+            currentPhoneNumber = '';
+        });
+        
+        // Send OTP
+        document.getElementById('send-otp-btn').addEventListener('click', async () => {
+            const phoneNumber = document.getElementById('phone-number').value;
+            const sendOtpBtn = document.getElementById('send-otp-btn');
+            const btnText = sendOtpBtn.querySelector('.btn-text');
+            const btnLoader = sendOtpBtn.querySelector('.btn-loader');
+            
+            if (!phoneNumber) {
+                authHandler.showMessage('Please enter a phone number', 'error');
+                return;
+            }
+            
+            // Show loading state
+            sendOtpBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline';
+            
+            const result = await authHandler.signInWithPhone(phoneNumber);
+            
+            if (result.success) {
+                currentPhoneNumber = result.phone;
+                document.getElementById('phone-display').textContent = result.phone;
+                document.getElementById('phone-input-section').style.display = 'none';
+                document.getElementById('otp-verify-section').style.display = 'block';
+                document.getElementById('otp-code').focus();
+                authHandler.showMessage('OTP sent successfully!', 'success');
+            } else {
+                authHandler.showMessage(result.error, 'error');
+            }
+            
+            // Reset button state
+            sendOtpBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnLoader.style.display = 'none';
+        });
+        
+        // Verify OTP
+        document.getElementById('verify-otp-btn').addEventListener('click', async () => {
+            const otpCode = document.getElementById('otp-code').value;
+            const verifyBtn = document.getElementById('verify-otp-btn');
+            const btnText = verifyBtn.querySelector('.btn-text');
+            const btnLoader = verifyBtn.querySelector('.btn-loader');
+            
+            if (!otpCode) {
+                authHandler.showMessage('Please enter the OTP code', 'error');
+                return;
+            }
+            
+            // Show loading state
+            verifyBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline';
+            
+            const result = await authHandler.verifyPhoneOtp(currentPhoneNumber, otpCode);
+            
+            if (result.success) {
+                authHandler.showMessage('Account created! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 1000);
+            } else {
+                authHandler.showMessage(result.error, 'error');
+                verifyBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+            }
+        });
+        
+        // Resend OTP
+        document.getElementById('resend-otp-btn').addEventListener('click', async () => {
+            const resendBtn = document.getElementById('resend-otp-btn');
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Sending...';
+            
+            const result = await authHandler.signInWithPhone(currentPhoneNumber);
+            
+            if (result.success) {
+                authHandler.showMessage('OTP resent successfully!', 'success');
+                document.getElementById('otp-code').value = '';
+                document.getElementById('otp-code').focus();
+            } else {
+                authHandler.showMessage(result.error, 'error');
+            }
+            
+            resendBtn.disabled = false;
+            resendBtn.textContent = 'Resend OTP';
         });
     </script>
 </body>
